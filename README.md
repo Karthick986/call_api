@@ -1,6 +1,6 @@
 # call_api
 
-A new Flutter project.
+A simple integrating get api in flutter
 
 ## Getting Started
 
