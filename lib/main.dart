@@ -26,17 +26,64 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key, required this.title}) : super(key: key);
   final String title;
+
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
   List<GetPostModel> postList = [];
+  List<GetPostModel> filterPostList = [];
+  bool showEmpty = false, filterOnOff = false;
+  TextEditingController searchController = TextEditingController();
+
+  void onSearchPosts() {
+    filterPostList.clear();
+
+    if (searchController.text.isEmpty) {
+      filterOnOff = false;
+    } else {
+      filterOnOff = true;
+
+      filterPostList = postList
+          .where((element) => element.title
+              .toString()
+              .toLowerCase()
+              .contains(searchController.text.toLowerCase()))
+          .toList();
+    }
+
+    setState(() {});
+  }
+
+  Widget buildPosts(List<GetPostModel> postList, index) {
+    return Container(
+      margin: const EdgeInsets.all(8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            postList[index].title.toString(),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          Text(
+            postList[index].body.toString(),
+            style: const TextStyle(fontWeight: FontWeight.normal, fontSize: 16),
+          )
+        ],
+      ),
+    );
+  }
 
   getPosts() async {
     postList = await GetPostService().getPosts();
-    setState(() {});
+    setState(() {
+      if (postList.isEmpty) {
+        showEmpty = true;
+      } else {
+        showEmpty = false;
+      }
+    });
   }
 
   @override
@@ -48,24 +95,60 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: SafeArea(
-        child: ListView.builder(itemBuilder: (context, index) {
-          return Container(
-            margin: EdgeInsets.all(8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(postList[index].title.toString(),
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),),
-                Text(postList[index].body.toString(),
-                  style: TextStyle(fontWeight: FontWeight.normal, fontSize: 16),)
-              ],
-            ),
-          );
-        }, itemCount: postList.length,),
-      ));
+        appBar: AppBar(
+          title: Text(widget.title),
+        ),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  controller: searchController,
+                  onChanged: (value) => onSearchPosts(),
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                      hintText: "Search here...",
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4))),
+                ),
+              ),
+              const SizedBox(
+                height: 8,
+              ),
+              Expanded(
+                child: showEmpty
+                    ? const Center(
+                        child: Text("No data available"),
+                      )
+                    : filterOnOff
+                        ? filterPostList.isEmpty
+                            ? const Center(
+                                child: Text("No data available"),
+                              )
+                            : Scrollbar(
+                                child: ListView.builder(
+                                  itemBuilder: (context, index) {
+                                    return buildPosts(filterPostList, index);
+                                  },
+                                  itemCount: filterPostList.length,
+                                ),
+                              )
+                        : postList.isEmpty
+                            ? const Center(
+                                child: CircularProgressIndicator(),
+                              )
+                            : Scrollbar(
+                                child: ListView.builder(
+                                  itemBuilder: (context, index) {
+                                    return buildPosts(postList, index);
+                                  },
+                                  itemCount: postList.length,
+                                ),
+                              ),
+              ),
+            ],
+          ),
+        ));
   }
 }
