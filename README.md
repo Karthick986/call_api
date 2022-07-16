@@ -1,6 +1,6 @@
 # call_api
 
-A simple integrating get api and search feature in flutter
+A simple integrating get api, search and pagination features in flutter
 
 ## Getting Started
 

@@ -32,10 +32,15 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  List<GetPostModel> allPostsList = [];
   List<GetPostModel> postList = [];
   List<GetPostModel> filterPostList = [];
   bool showEmpty = false, filterOnOff = false;
   TextEditingController searchController = TextEditingController();
+  int startLimit = 0, endLimit = 10;
+
+  ScrollController pageController = ScrollController();
+  bool isPageLoad = false, callPagination = true;
 
   void onSearchPosts() {
     filterPostList.clear();
@@ -45,7 +50,7 @@ class _MyHomePageState extends State<MyHomePage> {
     } else {
       filterOnOff = true;
 
-      filterPostList = postList
+      filterPostList = allPostsList
           .where((element) => element.title
               .toString()
               .toLowerCase()
@@ -76,12 +81,16 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   getPosts() async {
-    postList = await GetPostService().getPosts();
+    allPostsList = await GetPostService().getPosts();
     setState(() {
-      if (postList.isEmpty) {
+      if (allPostsList.isEmpty) {
         showEmpty = true;
       } else {
         showEmpty = false;
+        for (int i = startLimit; i < endLimit; i++) {
+          postList.add(allPostsList[i]);
+        }
+        isPageLoad = true;
       }
     });
   }
@@ -89,6 +98,33 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
+
+    pageController.addListener(() {
+      if (pageController.position.pixels ==
+          pageController.position.maxScrollExtent) {
+        if (isPageLoad) {
+          setState(() {
+            startLimit = allPostsList.length > startLimit + 10
+                ? startLimit + 10
+                : allPostsList.length;
+            endLimit = allPostsList.length > endLimit + 10
+                ? endLimit + 10
+                : allPostsList.length;
+
+            print("startLimit-----> "+startLimit.toString());
+            print("endLimit-----> "+endLimit.toString());
+            if (endLimit < allPostsList.length) {
+              for (int i = startLimit; i < endLimit; i++) {
+                postList.add(allPostsList[i]);
+              }
+            } else {
+              isPageLoad = false;
+            }
+          });
+        }
+      }
+    });
+
     getPosts();
   }
 
@@ -128,6 +164,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               )
                             : Scrollbar(
                                 child: ListView.builder(
+                                  physics: const BouncingScrollPhysics(),
                                   itemBuilder: (context, index) {
                                     return buildPosts(filterPostList, index);
                                   },
@@ -140,10 +177,21 @@ class _MyHomePageState extends State<MyHomePage> {
                               )
                             : Scrollbar(
                                 child: ListView.builder(
+                                  physics: const BouncingScrollPhysics(),
+                                  controller: pageController,
                                   itemBuilder: (context, index) {
-                                    return buildPosts(postList, index);
+                                    return index == postList.length
+                                        ? Visibility(
+                                            visible: isPageLoad,
+                                            child: const Padding(
+                                                padding: EdgeInsets.all(8.0),
+                                                child: Center(
+                                                  child:
+                                                      CircularProgressIndicator(),
+                                                )))
+                                        : buildPosts(postList, index);
                                   },
-                                  itemCount: postList.length,
+                                  itemCount: postList.length + 1,
                                 ),
                               ),
               ),
