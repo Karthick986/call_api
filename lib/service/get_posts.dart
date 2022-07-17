@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 class GetPostService {
   Future<List<GetPostModel>> getPosts() async {
+
     var response = await http.get(Uri.parse("https://jsonplaceholder.typicode.com/posts"));
     var posts = jsonDecode(response.body);
 

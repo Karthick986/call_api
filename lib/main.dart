@@ -40,7 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
   int startLimit = 0, endLimit = 10;
 
   ScrollController pageController = ScrollController();
-  bool isPageLoad = false, callPagination = true;
+  bool isPageLoad = false;
 
   void onSearchPosts() {
     filterPostList.clear();
@@ -87,10 +87,15 @@ class _MyHomePageState extends State<MyHomePage> {
         showEmpty = true;
       } else {
         showEmpty = false;
+        endLimit = allPostsList.length>10 ? endLimit : allPostsList.length;
         for (int i = startLimit; i < endLimit; i++) {
           postList.add(allPostsList[i]);
         }
-        isPageLoad = true;
+        if (endLimit>=10) {
+          isPageLoad = true;
+        } else {
+          isPageLoad = false;
+        }
       }
     });
   }
