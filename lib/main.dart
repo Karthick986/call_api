@@ -32,15 +32,13 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<GetPostModel> allPostsList = [];
+  List<GetPostModel> allPostList = [];
   List<GetPostModel> postList = [];
   List<GetPostModel> filterPostList = [];
-  bool showEmpty = false, filterOnOff = false;
-  TextEditingController searchController = TextEditingController();
+  bool showEmpty = false, filterOnOff = false, isPageLoad = false;
   int startLimit = 0, endLimit = 10;
-
+  TextEditingController searchController = TextEditingController();
   ScrollController pageController = ScrollController();
-  bool isPageLoad = false;
 
   void onSearchPosts() {
     filterPostList.clear();
@@ -50,7 +48,7 @@ class _MyHomePageState extends State<MyHomePage> {
     } else {
       filterOnOff = true;
 
-      filterPostList = allPostsList
+      filterPostList = allPostList
           .where((element) => element.title
               .toString()
               .toLowerCase()
@@ -81,17 +79,18 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   getPosts() async {
-    allPostsList = await GetPostService().getPosts();
+    allPostList = await GetPostService().getPosts();
     setState(() {
-      if (allPostsList.isEmpty) {
+      if (allPostList.isEmpty) {
         showEmpty = true;
       } else {
         showEmpty = false;
-        endLimit = allPostsList.length>10 ? endLimit : allPostsList.length;
+
+        endLimit = allPostList.length > 10 ? endLimit : allPostList.length;
         for (int i = startLimit; i < endLimit; i++) {
-          postList.add(allPostsList[i]);
+          postList.add(allPostList[i]);
         }
-        if (endLimit>=10) {
+        if (endLimit >= 10) {
           isPageLoad = true;
         } else {
           isPageLoad = false;
@@ -109,18 +108,17 @@ class _MyHomePageState extends State<MyHomePage> {
           pageController.position.maxScrollExtent) {
         if (isPageLoad) {
           setState(() {
-            startLimit = allPostsList.length > startLimit + 10
-                ? startLimit + 10
-                : allPostsList.length;
-            endLimit = allPostsList.length > endLimit + 10
-                ? endLimit + 10
-                : allPostsList.length;
+            startLimit = allPostList.length > startLimit+10 ?
+                startLimit+10 : allPostList.length;
+            endLimit = allPostList.length > endLimit+10 ?
+            endLimit+10 : allPostList.length;
 
-            print("startLimit-----> "+startLimit.toString());
-            print("endLimit-----> "+endLimit.toString());
-            if (endLimit < allPostsList.length) {
+            debugPrint("startLimit-----> "+startLimit.toString());
+            debugPrint("endLimit-----> "+endLimit.toString());
+
+            if (startLimit != endLimit) {
               for (int i = startLimit; i < endLimit; i++) {
-                postList.add(allPostsList[i]);
+                postList.add(allPostList[i]);
               }
             } else {
               isPageLoad = false;
@@ -182,18 +180,19 @@ class _MyHomePageState extends State<MyHomePage> {
                               )
                             : Scrollbar(
                                 child: ListView.builder(
-                                  physics: const BouncingScrollPhysics(),
                                   controller: pageController,
+                                  physics: const BouncingScrollPhysics(),
                                   itemBuilder: (context, index) {
                                     return index == postList.length
                                         ? Visibility(
                                             visible: isPageLoad,
                                             child: const Padding(
-                                                padding: EdgeInsets.all(8.0),
-                                                child: Center(
-                                                  child:
-                                                      CircularProgressIndicator(),
-                                                )))
+                                              padding: EdgeInsets.all(8.0),
+                                              child: Center(
+                                                child:
+                                                    CircularProgressIndicator(),
+                                              ),
+                                            ))
                                         : buildPosts(postList, index);
                                   },
                                   itemCount: postList.length + 1,
